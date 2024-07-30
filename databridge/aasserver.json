@@ -1,0 +1,8 @@
+[
+	{
+		"uniqueId": "value",
+		"submodelEndpoint": "http://localhost:8081/submodels/aHR0cHM6Ly9odHctYmVybGluLmRlL2lkcy9zbS9kZW1vc3VibW9kZWx2Mw",
+		"idShortPath": "IntProp",
+		"api": "DotAAS-V3"
+	}
+]

@@ -1,31 +1,5 @@
 version: "3.9"
 services:
-  mongo:
-    image: mongo:5.0.10
-    # Provide mongo config
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: mongoAdmin
-      MONGO_INITDB_ROOT_PASSWORD: mongoPassword
-    healthcheck:
-      test: mongo
-      interval: 10s
-      start_period: 5s
-      retries: 5
-    ports:
-     - 27017:27017
-    
-  mqtt:
-    image: eclipse-mosquitto:2.0.15
-    ports:
-      - 1884:1884
-    volumes:
-      - ./mosquitto:/mosquitto/config
-    healthcheck:
-      test: ["CMD-SHELL", mosquitto_sub -p 1884 -t 'topic' -C 1 -E -i probe -W 3]
-      interval: 5s
-      retries: 3
-      start_period: 1s
-      timeout: 10s   
        
   aas-env:
     image: eclipsebasyx/aas-environment:2.0.0-SNAPSHOT
@@ -35,31 +9,24 @@ services:
     ports:
         - 8081:8081
     depends_on:
-        mongo:
-          condition: service_healthy
         aas-registry:
             condition: service_healthy
         sm-registry:
             condition: service_healthy
-        mqtt:
-            condition: service_healthy
             
   aas-registry:
-    image: eclipsebasyx/aas-registry-log-mongodb:2.0.0-SNAPSHOT
+    image: eclipsebasyx/aas-registry-log-mem:2.0.0-SNAPSHOT
     ports:
       - 8082:8080
     volumes:
       - ./aas-registry.yml:/workspace/config/application.yml
     
   sm-registry:
-    image: eclipsebasyx/submodel-registry-log-mongodb:2.0.0-SNAPSHOT
+    image: eclipsebasyx/submodel-registry-log-mem:2.0.0-SNAPSHOT
     ports:
       - 8083:8080
     volumes:
       - ./sm-registry.yml:/workspace/config/application.yml
-    depends_on:
-        mongo:
-          condition: service_healthy
 
   aas-web-ui_v2:
     image: eclipsebasyx/aas-gui:v2-240515
@@ -75,3 +42,40 @@ services:
     depends_on:
       aas-env:
         condition: service_healthy
+    
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_DATABASE: 'mysql'
+      MYSQL_ROOT_PASSWORD: 'admin'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+  
+  phpmyadmin:
+    image: phpmyadmin
+    ports:
+      - 9000:80
+    environment:
+     - PMA_ARBITRARY=1
+
+  databridge:
+    image: mateusmolinaiese/databridge:latest
+    volumes:
+      - ./databridge:/usr/share/config
+    network_mode: host
+    depends_on:
+      mysql:
+        condition: service_started
+      aas-web-ui_v2:
+        condition: service_started
+    healthcheck:
+      test: wget --no-verbose --tries=1 databridge:8085/health || exit 1
+      interval: 20s
+      retries: 3
+      start_period: 10s
+      timeout: 10s
+
+volumes:
+  mysql-data:

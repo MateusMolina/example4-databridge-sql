@@ -1,0 +1,12 @@
+[
+  {
+    "uniqueId": "sqlsource",
+    "serverUrl": "localhost",
+    "serverPort": 3306,
+    "user": "root",
+    "password": "admin",
+    "dbName": "example",
+    "db": "mysql",
+    "query": "SELECT value, timestamp FROM sensor ORDER BY id DESC LIMIT 1"
+  }
+]
